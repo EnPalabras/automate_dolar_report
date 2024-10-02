@@ -1,8 +1,13 @@
 import { getRows } from './src/connections/GoogleAPI.js'
 import command from './src/PostgreSQL.js'
+import dotenv from 'dotenv'
+
+dotenv.config()
+
+const { GOOGLE_SPREADSHEET_ID } = process.env
 
 async function GetDolarCommand() {
-  const response = await getRows('Dolar!P3:Q')
+  const response = await getRows('Dolar!P3:Q', GOOGLE_SPREADSHEET_ID)
 
   const data = response.data.values
 
