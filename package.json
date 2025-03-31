@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "start:dolar": "node index.js",
+    "start:daily": "node daily-update.js"
   },
   "keywords": [],
   "author": "",

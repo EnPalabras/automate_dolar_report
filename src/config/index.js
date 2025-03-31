@@ -15,11 +15,13 @@ export default {
     privateKey: process.env.GOOGLE_PRIVATE_KEY,
     spreadsheets: {
       main: process.env.GOOGLE_SPREADSHEET_ID,
+      mayoristas: process.env.GOOGLE_SPREADSHEET_ID_MAYORISTAS,
+      paidChannels: process.env.GOOGLE_SPREADSHEET_PAID_CHANNELS_REPORT,
+      campaignReport: process.env.GOOGLE_SPREADSHEET_CAMPAIGN_REPORT_ID,
       meta: process.env.GOOGLE_SPREADSHEET_META_REPORT_ID,
       stories: process.env.GOOGLE_SPREADSHEET_STORIES_REPORT_ID,
       google: process.env.GOOGLE_SPREADSHEET_GOOGLE_REPORT_ID,
       meli: process.env.GOOGLE_SPREADSHEET_MELI_REPORT_ID,
-      paidChannels: process.env.GOOGLE_SPREADSHEET_PAID_CHANNELS_REPORT,
     }
   },
   logger: {

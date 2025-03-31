@@ -1,9 +1,14 @@
-name: Update Mayoristas
+name: Daily Updates
 
 env:
+  GOOGLE_SPREADSHEET_ID: ${{ secrets.GOOGLE_SPREADSHEET_ID }}
   GOOGLE_SPREADSHEET_ID_MAYORISTAS: ${{ secrets.GOOGLE_SPREADSHEET_ID_MAYORISTAS }}
   GOOGLE_SERVICE_ACCOUNT_EMAIL: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
   GOOGLE_PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}
+  GOOGLE_SPREADSHEET_PAID_CHANNELS_REPORT: ${{ secrets.GOOGLE_SPREADSHEET_PAID_CHANNELS_REPORT }}
+  
+  # Nombre del spreadsheet para campaign report
+  GOOGLE_SPREADSHEET_CAMPAIGN_REPORT_ID: ${{ secrets.GOOGLE_SPREADSHEET_CAMPAIGN_REPORT_ID }}
 
   PG_HOST: ${{ secrets.PG_HOST }}
   PG_PORT: ${{ secrets.PG_PORT }}
@@ -18,7 +23,8 @@ on:
     types:
       - webhook
   schedule:
-    - cron: '00 12 * * *'
+    # Ejecutar todos los días a las 00:00 UTC (ajusta según tus necesidades)
+    - cron: '00 00 * * *'
 
 jobs:
   build:
@@ -32,4 +38,4 @@ jobs:
           node-version: 20
       - run: |
           npm install
-          node src/mayoristas.js
+          node daily-update.js
