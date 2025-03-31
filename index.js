@@ -37,6 +37,8 @@ async function GetDolarCommand() {
   return consulta
 }
 
+
+
 async function main() {
   const values_data = await GetDolarCommand()
   const update = await command(values_data)
