@@ -104,12 +104,65 @@ export const updateCombinedReportJob = async () => {
 };
 
 /**
+ * Actualiza la tabla google_users_by_day en la base de datos
+ */
+export const updateGoogleUsersByDayJob = async () => {
+  logger.start('Google Users By Day Update');
+  try {
+    const GOOGLE_REPORT_ID = process.env.GOOGLE_SPREADSHEET_GOOGLE_REPORT_ID || config.google.spreadsheets.google;
+    
+    // Obtener datos de la hoja "Users & CR!A2:H"
+    const response = await getRows('Users & CR!A2:H', GOOGLE_REPORT_ID);
+    const data = response.data.values;
+
+    if (!data || data.length === 0) {
+      logger.warn('No Google Users data to update');
+      return;
+    }
+    
+    let valuesClause = 'VALUES ';
+    
+    const valores = data.map((row) => {
+      return `(${row.map((value, index) => {
+        // Para la fecha (primera columna) - formatear como string
+        if (index === 0) {
+          return `'${value.replace(/'/g, "''")}'`;
+        }
+        // Para valores numéricos (todas las demás columnas)
+        if (value === undefined || value === null || value.trim() === '') {
+          return 'NULL';
+        } else if (!isNaN(parseFloat(value))) {
+          // Convertir valores numéricos, reemplazando comas por puntos si es necesario
+          return parseFloat(value.replace(/,/g, '.'));
+        } else {
+          return `'${value.replace(/'/g, "''")}'`;
+        }
+      }).join(', ')})`;
+    }).join(',\n');
+    
+    valuesClause += valores;
+    
+    // Eliminar todos los registros de la tabla google_users_by_day
+    await pool.query('DELETE FROM google_users_by_day');
+    
+    // Insertar los nuevos valores
+    await pool.query(`INSERT INTO google_users_by_day (date, sessions, totalusers, newusers, engagedsessions, addtocarts, checkouts, ecommercepurchases) ${valuesClause}`);
+    
+    logger.success('Google Users By Day data updated successfully');
+  } catch (error) {
+    logger.error('Failed to update Google Users By Day data', error);
+  }
+  logger.end('Google Users By Day Update');
+};
+
+/**
  * Ejecuta todas las tareas diarias
  */
 export const runAllDailyJobs = async () => {
   try {
     await updateDolarJob();
     await updateCombinedReportJob();
+    await updateGoogleUsersByDayJob(); // Agregar esta línea
     logger.success('All daily jobs completed successfully');
   } catch (error) {
     logger.error('Error running daily jobs', error);
