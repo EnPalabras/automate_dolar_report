@@ -156,13 +156,66 @@ export const updateGoogleUsersByDayJob = async () => {
 };
 
 /**
+ * Actualiza la tabla users_cr_by_channel en la base de datos
+ */
+export const updateUsersCRByChannelJob = async () => {
+  logger.start('Users CR by Channel Update');
+  try {
+    const GOOGLE_REPORT_ID = process.env.GOOGLE_SPREADSHEET_GOOGLE_REPORT_ID || config.google.spreadsheets.google;
+    
+    // Obtener datos de la hoja "Users & CR by Channel!A2:K"
+    const response = await getRows('Users & CR by Channel!A2:K', GOOGLE_REPORT_ID);
+    const data = response.data.values;
+
+    if (!data || data.length === 0) {
+      logger.warn('No Users CR by Channel data to update');
+      return;
+    }
+    
+    let valuesClause = 'VALUES ';
+    
+    const valores = data.map((row) => {
+      return `(${row.map((value, index) => {
+        // Para la fecha (primera columna) y primary_channel_group (segunda columna) - formatear como strings
+        if (index <= 1) {
+          return `'${value.replace(/'/g, "''")}'`;
+        }
+        // Para valores numéricos (resto de columnas)
+        if (value === undefined || value === null || value.trim() === '') {
+          return 'NULL';
+        } else if (!isNaN(parseFloat(value))) {
+          // Convertir valores numéricos, reemplazando comas por puntos si es necesario
+          return parseFloat(value.replace(/,/g, '.'));
+        } else {
+          return `'${value.replace(/'/g, "''")}'`;
+        }
+      }).join(', ')})`;
+    }).join(',\n');
+    
+    valuesClause += valores;
+    
+    // Eliminar todos los registros de la tabla users_cr_by_channel
+    await pool.query('DELETE FROM users_cr_by_channel');
+    
+    // Insertar los nuevos valores
+    await pool.query(`INSERT INTO users_cr_by_channel (date, primary_channel_group, sessions, engaged_sessions, total_users, new_users, add_to_carts, checkouts, key_events, ecommerce_purchases, cr) ${valuesClause}`);
+    
+    logger.success('Users CR by Channel data updated successfully');
+  } catch (error) {
+    logger.error('Failed to update Users CR by Channel data', error);
+  }
+  logger.end('Users CR by Channel Update');
+};
+
+/**
  * Ejecuta todas las tareas diarias
  */
 export const runAllDailyJobs = async () => {
   try {
     await updateDolarJob();
     await updateCombinedReportJob();
-    await updateGoogleUsersByDayJob(); // Agregar esta línea
+    await updateGoogleUsersByDayJob();
+    await updateUsersCRByChannelJob(); // Nueva tarea agregada
     logger.success('All daily jobs completed successfully');
   } catch (error) {
     logger.error('Error running daily jobs', error);
