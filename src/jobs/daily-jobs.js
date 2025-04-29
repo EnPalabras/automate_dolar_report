@@ -207,6 +207,74 @@ export const updateUsersCRByChannelJob = async () => {
   logger.end('Users CR by Channel Update');
 };
 
+
+/**
+ * Actualiza la tabla ads_campaign_performance en la base de datos
+ */
+export const updateAdsCampaignPerformanceJob = async () => {
+  logger.start('Ads Campaign Performance Update');
+  try {
+    const GOOGLE_REPORT_ID = process.env.GOOGLE_SPREADSHEET_GOOGLE_REPORT_ID || config.google.spreadsheets.google;
+    
+    // Obtener datos de la hoja "Probando Ads!A2:I"
+    const response = await getRows('Probando Ads!A2:I', GOOGLE_REPORT_ID);
+    const data = response.data.values;
+
+    if (!data || data.length === 0) {
+      logger.warn('No Ads Campaign Performance data to update');
+      return;
+    }
+    
+    let valuesClause = 'VALUES ';
+    
+    const valores = data.map((row) => {
+      return `(${row.map((value, index) => {
+        // Formatear fecha, nombre de campaña y contenido del anuncio como strings
+        if (index <= 2) {
+          if (value === undefined || value === null || value.trim() === '') {
+            return "'(not set)'";
+          }
+          return `'${value.replace(/'/g, "''")}'`;
+        }
+        // Para sesiones, usuarios totales y eventos clave (índices 3, 4, 7)
+        else if (index === 3 || index === 4 || index === 7) {
+          if (value === undefined || value === null || value.trim() === '') {
+            return 0;
+          }
+          return parseInt(value) || 0;
+        }
+        // Para tasas (bounce_rate y engagement_rate) (índices 5, 6)
+        else if (index === 5 || index === 6) {
+          if (value === undefined || value === null || value.trim() === '') {
+            return 0;
+          }
+          return parseFloat(value) || 0;
+        }
+        // Para total_revenue (índice 8)
+        else if (index === 8) {
+          if (value === undefined || value === null || value.trim() === '') {
+            return 0;
+          }
+          return parseFloat(value) || 0;
+        }
+      }).join(', ')})`;
+    }).join(',\n');
+    
+    valuesClause += valores;
+    
+    // Eliminar todos los registros de la tabla ads_campaign_performance
+    await pool.query('DELETE FROM ads_campaign_performance');
+    
+    // Insertar los nuevos valores
+    await pool.query(`INSERT INTO ads_campaign_performance (date, campaign_name, ad_content, sessions, total_users, bounce_rate, engagement_rate, key_events, total_revenue) ${valuesClause}`);
+    
+    logger.success('Ads Campaign Performance data updated successfully');
+  } catch (error) {
+    logger.error('Failed to update Ads Campaign Performance data', error);
+  }
+  logger.end('Ads Campaign Performance Update');
+};
+
 /**
  * Ejecuta todas las tareas diarias
  */
@@ -215,7 +283,8 @@ export const runAllDailyJobs = async () => {
     await updateDolarJob();
     await updateCombinedReportJob();
     await updateGoogleUsersByDayJob();
-    await updateUsersCRByChannelJob(); // Nueva tarea agregada
+    await updateUsersCRByChannelJob(); 
+    await updateAdsCampaignPerformanceJob(); // Nueva tarea para Ads Campaign Performance
     logger.success('All daily jobs completed successfully');
   } catch (error) {
     logger.error('Error running daily jobs', error);
