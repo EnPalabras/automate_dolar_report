@@ -228,7 +228,7 @@ export const updateAdsCampaignPerformanceJob = async () => {
     const GOOGLE_REPORT_ID = process.env.GOOGLE_SPREADSHEET_GOOGLE_REPORT_ID || config.google.spreadsheets.google;
     
     // Obtener datos de la hoja "Probando Ads!A2:I"
-    const response = await getRows('Probando Ads!A2:I', GOOGLE_REPORT_ID);
+    const response = await getRows('Ads Report by Day!A2:J', GOOGLE_REPORT_ID);
     const data = response.data.values;
 
     if (!data || data.length === 0) {
@@ -239,7 +239,9 @@ export const updateAdsCampaignPerformanceJob = async () => {
     let valuesClause = 'VALUES ';
     
     const valores = data.map((row) => {
+      // Si la fila tiene menos columnas que el máximo, rellenar con valores vacíos
       return `(${row.map((value, index) => {
+
         // Formatear fecha, nombre de campaña y contenido del anuncio como strings
         if (index <= 2) {
           if (value === undefined || value === null || value.trim() === '') {
@@ -268,6 +270,13 @@ export const updateAdsCampaignPerformanceJob = async () => {
           }
           return parseFloat(value) || 0;
         }
+        // Para ad_id (índice 9)
+        else if (index === 9) {
+          if (value === undefined || value === null || value.trim() === '') {
+            return "'(not set)'";
+          }
+          return `'${value.replace(/'/g, "''")}'`;
+        }
       }).join(', ')})`;
     }).join(',\n');
     
@@ -277,7 +286,7 @@ export const updateAdsCampaignPerformanceJob = async () => {
     await pool.query('DELETE FROM ads_campaign_performance');
     
     // Insertar los nuevos valores
-    await pool.query(`INSERT INTO ads_campaign_performance (date, campaign_name, ad_content, sessions, total_users, bounce_rate, engagement_rate, key_events, total_revenue) ${valuesClause}`);
+    await pool.query(`INSERT INTO ads_campaign_performance (date, campaign_name, ad_content, sessions, total_users, bounce_rate, engagement_rate, key_events, total_revenue, ad_id) ${valuesClause}`);
     
     logger.success('Ads Campaign Performance data updated successfully');
   } catch (error) {
