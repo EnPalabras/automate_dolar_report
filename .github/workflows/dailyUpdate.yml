@@ -25,8 +25,8 @@ on:
     types:
       - webhook
   schedule:
-    # Ejecutar todos los días a las 00:00 UTC (ajusta según tus necesidades)
-    - cron: '00 00 * * *'
+    # Ejecutar todos los días cada 2hs
+    - cron: '0 */2 * * *'
 
 jobs:
   build:
