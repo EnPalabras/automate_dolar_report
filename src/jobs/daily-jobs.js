@@ -228,7 +228,7 @@ export const updateAdsCampaignPerformanceJob = async () => {
     const GOOGLE_REPORT_ID = process.env.GOOGLE_SPREADSHEET_GOOGLE_REPORT_ID || config.google.spreadsheets.google;
     
     // Obtener datos de la hoja "Probando Ads!A2:I"
-    const response = await getRows('Ads Report by Day!A2:J', GOOGLE_REPORT_ID);
+    const response = await getRows('Ads Report by Day!A2:K', GOOGLE_REPORT_ID);
     const data = response.data.values;
 
     if (!data || data.length === 0) {
@@ -277,6 +277,13 @@ export const updateAdsCampaignPerformanceJob = async () => {
           }
           return `'${value.replace(/'/g, "''")}'`;
         }
+        // Para total_spend (índice 10)
+        else if (index === 10) {
+          if (value === undefined || value === null || value.trim() === '') {
+            return 0;
+          }
+          return parseFloat(value) || 0;
+        }
       }).join(', ')})`;
     }).join(',\n');
     
@@ -286,7 +293,7 @@ export const updateAdsCampaignPerformanceJob = async () => {
     await pool.query('DELETE FROM ads_campaign_performance');
     
     // Insertar los nuevos valores
-    await pool.query(`INSERT INTO ads_campaign_performance (date, campaign_name, ad_content, sessions, total_users, bounce_rate, engagement_rate, key_events, total_revenue, ad_id) ${valuesClause}`);
+    await pool.query(`INSERT INTO ads_campaign_performance (date, campaign_name, ad_content, sessions, total_users, bounce_rate, engagement_rate, key_events, total_revenue, ad_id, spend) ${valuesClause}`);
     
     logger.success('Ads Campaign Performance data updated successfully');
   } catch (error) {
