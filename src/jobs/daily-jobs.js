@@ -60,7 +60,7 @@ export const updateCombinedReportJob = async () => {
     const CAMPAIGN_REPORT_ID = process.env.GOOGLE_SPREADSHEET_PAID_CHANNELS_REPORT || config.google.spreadsheets.paidChannels;
     
     // Ajustado para coincidir con tus datos: fecha, campaña, canal, impresiones, clics, gasto, ingresos, eventos clave
-    const response = await getRows('Combined by Day!A2:H', CAMPAIGN_REPORT_ID);
+    const response = await getRows('Combined by Day!A2:I', CAMPAIGN_REPORT_ID);
     const data = response.data.values;
 
     if (!data || data.length === 0) {
@@ -73,7 +73,7 @@ export const updateCombinedReportJob = async () => {
     const valores = data.map((row) => {
       return `(${row.map((value, index) => {
         // Para fecha, nombre de campaña y canal (primeras 3 columnas) - formato como strings
-        if (index <= 2) {
+        if (index <= 3) {
           return `'${value.replace(/'/g, "''")}'`;
         }
         // Para valores numéricos
@@ -89,12 +89,12 @@ export const updateCombinedReportJob = async () => {
     }).join(',\n');
     
     valuesClause += valores;
-    
+    console.log(valuesClause);
     // Eliminar todos los registros de la tabla combined_report_by_day
     await pool.query('DELETE FROM combined_report_by_day');
     
     // Insertar los nuevos valores
-    await pool.query(`INSERT INTO combined_report_by_day (date, campaign_name, channel, impressions, clicks, spend, total_revenue, keyevents) ${valuesClause}`);
+    await pool.query(`INSERT INTO combined_report_by_day (date, campaign_name, ad_name, channel, impressions, clicks, spend, total_revenue, keyevents) ${valuesClause}`);
     
     logger.success('Combined Report data updated successfully');
   } catch (error) {
