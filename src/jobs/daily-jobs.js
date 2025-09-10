@@ -304,7 +304,7 @@ export const updateAdsCampaignPerformanceJob = async () => {
 
 /**
  * Actualiza la tabla meli_campaigns_performance en la base de datos
- */
+ 
 export const updateMeliCampaignsJob = async () => {
   logger.start('MeLi Campaigns Update');
   try {
@@ -381,6 +381,7 @@ export const updateMeliCampaignsJob = async () => {
   }
   logger.end('MeLi Campaigns Update');
 };
+*/
 
 /**
  * Actualiza los datos de mappings de anuncios
