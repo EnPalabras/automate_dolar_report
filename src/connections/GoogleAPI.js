@@ -29,7 +29,5 @@ export const getRows = async (table_name, spreadsheetId) => {
     range: table_name,
   })
 
-  console.log(response.rows)
-
   return response
 }

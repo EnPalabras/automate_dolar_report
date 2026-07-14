@@ -64,7 +64,6 @@ export const updateCombinedReportJob = async () => {
     const data = response.data.values;
 
     if (!data || data.length === 0) {
-      logger.warn('No Combined Report data to update');
       return;
     }
     
@@ -89,7 +88,6 @@ export const updateCombinedReportJob = async () => {
     }).join(',\n');
     
     valuesClause += valores;
-    console.log(valuesClause);
     // Eliminar todos los registros de la tabla combined_report_by_day
     await pool.query('DELETE FROM combined_report_by_day');
     
@@ -116,7 +114,6 @@ export const updateGoogleUsersByDayJob = async () => {
     const data = response.data.values;
 
     if (!data || data.length === 0) {
-      logger.warn('No Google Users data to update');
       return;
     }
     
@@ -168,7 +165,6 @@ export const updateUsersCRByChannelJob = async () => {
     const data = response.data.values;
 
     if (!data || data.length === 0) {
-      logger.warn('No Users CR by Channel data to update');
       return;
     }
     
@@ -232,7 +228,6 @@ export const updateAdsCampaignPerformanceJob = async () => {
     const data = response.data.values;
 
     if (!data || data.length === 0) {
-      logger.warn('No Ads Campaign Performance data to update');
       return;
     }
     
@@ -393,12 +388,10 @@ export const updateAdsMappingJob = async () => {
     const MAIN_SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID || config.google.spreadsheets.main;
     
     // Obtener datos de la hoja "Sheet1!A2:L"
-    console.log(MAIN_SPREADSHEET_ID);
     const response = await getRows('Mapping!A2:L', MAIN_SPREADSHEET_ID);
     const data = response.data.values;
     
     if (!data || data.length === 0) {
-      logger.warn('No Ads Mapping data to update');
       return;
     }
     
@@ -462,9 +455,10 @@ export const runAllDailyJobs = async () => {
     await updateDolarJob();
     await updateCombinedReportJob();
     await updateGoogleUsersByDayJob();
-    await updateUsersCRByChannelJob(); 
-    await updateAdsCampaignPerformanceJob();
-    await updateMeliCampaignsJob(); // Nueva tarea para MeLi Campaigns
+    await updateUsersCRByChannelJob();
+    // Deshabilitado: la pestaña "Ads Report by Day" no existe en el spreadsheet
+    // (GaxiosError "Unable to parse range"). Reactivar cuando se corrija el nombre de la hoja.
+    // await updateAdsCampaignPerformanceJob();
     await updateAdsMappingJob();
     logger.success('All daily jobs completed successfully');
   } catch (error) {

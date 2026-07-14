@@ -5,9 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 async function main() {
-  console.log('Starting daily updates...');
   await runAllDailyJobs();
-  console.log('Daily updates completed.');
 }
 
 // Auto-execute
