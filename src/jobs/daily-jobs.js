@@ -88,11 +88,21 @@ export const updateCombinedReportJob = async () => {
     }).join(',\n');
     
     valuesClause += valores;
-    // Eliminar todos los registros de la tabla combined_report_by_day
-    await pool.query('DELETE FROM combined_report_by_day');
-    
-    // Insertar los nuevos valores
-    await pool.query(`INSERT INTO combined_report_by_day (date, campaign_name, ad_name, channel, impressions, clicks, spend, total_revenue, keyevents) ${valuesClause}`);
+    // DELETE + INSERT en una sola transaccion. Sueltos, si el INSERT falla la
+    // tabla queda VACIA en produccion porque el DELETE ya commiteo: paso el
+    // 8-sep-2026 en la otra base, con el dashboard leyendo de esta tabla.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM combined_report_by_day');
+      await client.query(`INSERT INTO combined_report_by_day (date, campaign_name, ad_name, channel, impressions, clicks, spend, total_revenue, keyevents) ${valuesClause}`);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
     
     logger.success('Combined Report data updated successfully');
   } catch (error) {
